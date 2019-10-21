@@ -193,5 +193,136 @@ mysql源码包的编译安装，编译过程中先安装cmake（源码包）工�
 我的职责：
 　　参与项目方案的实施、主要在项目中搭建Ｎginx＋Keepalived＋Ｔomcat（支持Jsp,do）实现高可用负载均衡，搭建ＭFS分布式文件系统
 
+个人简历-项目经验
 
+要点
+
+Kubernetes 生产应用
+
+云主机弹性伸缩
+日志收集平台 ELK
+监控平台 从 zabbix 到 prometheus
+代码发布平台 Jenkins
+堡垒机 jumpserver
+打点服务应用 prometheus
+
+ Kubernetes 生产应用
+
+项目经验：
+服务对弹性伸缩, deployment利用Horizontal Pod Autoscaling实现对pod实现对内对外提供服务, 利用 ingress 和 service 实现
+权限管理, 利用 namespace和rdac实现
+helm 软件包管理工具
+node 节点的弹性伸缩, 利用对云主机的弹性伸缩实现
+
+监控
+kube-prometheus
+日志收集
+节点上运行一个 agent 来收集日志,但 DaemonSet 模式下
+
+阿里云日志服务
+FELK
+pod 中包含一个 sidecar 容器来收集应用日志
+
+在每个 pod 中添加一个 fluentd 或 filebeat 容器收集日志传输到外部ELK 中
+直接在应用程序中将日志信息推送到采集后端
+
+项目名称：代码发布
+项目经验：
+jenkins shell（目前比较low）
+可用 drone 或 jenkins-pipeline 。
+自己写一个。已经有大概思路。
+
+<a id = "ecs"> 云主机弹性伸缩。</a>
+对主机的弹性伸缩服务，这个是云服务商提供的服务。\
+弹性伸缩主要是根据设置的伸缩规则，在业务需求增长时自动为您增加 ECS 实例以保证计算能力，在业务需求下降时自动减少 ECS 实例以节约成本。\
+产品主要通过在SLB后面挂载 ECS 。实现对cpu或内存使用率的监控，当内存或cpu超过一定的阈值，利用之前定义的伸缩策略，利用之前制作好到镜像进行伸缩 ECS 。\
+带来下面问题
+
+问题
+新发布代码无法在老镜像中。如果弹性伸缩的话，新增的 ECS 中的代码就和线上代码不一致了。
+
+解决
+个人觉得比 low，这样也使发布比较重。但在 Kubernetes 中就不存在这样的问题了。
+
+在发布代码后，调用云服务商的API，给新 ECS 打镜像、修改项目的弹性伸缩策略、把新镜像id替换老镜像id。
+
+<a id = "elk"> 日志收集 </a>
+elk+kafka
+a. filebeat 收集 nginx 的日志并把日志发给 logstash
+b. logstash 对日志进行字段拆分并写到 elasticicsearch 。如果利用到kafka ，就在写到 elasticicsearch 之前，先写到 kafka ，之后elasticicsearch 从kafka 中获取数据。
+c. 利用 kibana 进行展示。
+d. 在 kibana 根据不同的业务，提前配置好对 request_time、upstream_time、status_code 等等的 dashboard, 方便定位问题。
+e. 告警：
+写好脚本，定期检查不同业务的 request_time、upstream_time、status_code 。如果超时或 status_code 为 5XX 就钉钉告警
+程序部分日志收集和告警
+要求：
+
+网关 nginx 服务产生 request_id ,这个请求后面的一系列请求都带上这个request_id 写日志. 
+目地
+方便定位问题。
+
+当nginx 中出现 5xx 等错误时，根据这个请求的 request_id，可以找到程序中对应的一系列请求，从而快速定位具体问题在哪里。
+资源：
+考虑到资源问题，目前仅仅收集 warn/ error / fatal 三个等级的程序日志，导入到 elk 中。根据 request_id 快速定位程序问题。
+
+告警：
+
+定时任务，统计最近1分钟，如果某个项目出现10个 error 或者出现过 fatal 就告警。
+每天统计项目出现的 warn 次数。发邮件。
+项目 warn 较多的（500条warn），额外会钉钉发告警，让开发处理一下
+
+<a id = "prometheus"> 监控 </a>
+从 mysql+zabbix+grafana+微信/钉钉 到 prometheus+grafana+alertmanager + 钉钉
+
+主要监控点
+cpu 使用率
+内存使用量/使用率
+服务器负载
+磁盘容量/io
+网络流量
+tcp连接数
+来源IP连接数
+访问IP连接数
+对服务的监控：''
+redis : cpu，内存使用量、hit、miss 、get 、 set、ops ...
+elasticsearch: cpu、jvm、内存、gc、indics、健康状态、 ops ...
+mongodb: cpu、mem、ops ...
+之所以迁移到 prometheus
+
+prometheus 对资源的要求非常低。就一个二进制问题，运行起来就可以了。
+当 zabbix 监控超过100台服务器之后，查看监控的时候就明显慢了。
+prometheus 添加告警更加清晰方便。
+<a id = "jenkins"> jenkins 代码发布 </a>
+对开发要求：
+规定所有开发，所有编译过程，都写一个 `makefile` 。我这边仅仅需要 `make build` 即可
+大致流程：
+先从 git 仓库获取根据对应的 tag 或 branch 获取代码。
+利用 jenkins 的 shell 功能，进行 make build
+获取 build 后的代码， rsync 到服务器。
+重启 supervisor 服务。
+健康检查；sleep 3s，查看端口和进程是否正常。同时请求健康检查接口，查看服务是否正常。
+到这里这个发布完成。但同时会触发下面步骤。后台运行。
+利用 api 对新发布的项目中的某一个 ecs 进行打镜像. 一般10分钟左右
+修改弹性伸缩策略的的镜像 ID 为a步骤产生的镜像 ID 。
+发钉钉和邮件提醒。主要包括项目名称、修改前后的镜像名称。
+<a id = "jumpserver"> 堡垒机 jumpserver </a>
+目的：
+目前还没有把所有的程序日志收集，偶尔开发到服务器查看相应的debug日志。
+开发需要到服务器，就带来权限管理问题了。用它主要就是为了解决这个问题。
+优点：
+不同的开发，给不同的访问服务器的权限
+资源统一管理。
+操作审计等等
+<a id = "point"> 打点服务，定位资源使用情况 </a>
+prometheus+pushgateway+grafana+alertmanager+钉钉
+
+目的
+经常会遇到如下问题， 某个服务、资源的 cpu 或者内存飙高。为了清楚了解。这些资源为飙高，是什么服务导致，我们就加入了打点服务。
+
+方案：
+程序在调用其依赖的资源时，往时序数据库打一个点。
+prometheus 作为时序数据库。
+pushgateway 作为 prometheus时序数据库的网关。
+grafana 做展示
+alertmanager + 钉钉，实现告警
 
