@@ -326,3 +326,37 @@ pushgateway 作为 prometheus时序数据库的网关。
 grafana 做展示
 alertmanager + 钉钉，实现告警
 
+
+项目名称：gitlab+jenkins搭建代码发布平台
+项目经验：
+
+工作内容：
+负责jenkins平台的部署安装调优，测试。
+负责git
+jenkins shell（目前比较low）
+可用 drone 或 jenkins-pipeline 。
+自己写一个。已经有大概思路。
+
+搭建统一管理平台jumpserver
+
+
+项目经验（案例一）
+项目时间：2017-06 - 2017-07
+
+项目名称：LB + HA 集群 | 项目工具：Linux；ipvsadm；Piranha；Apache
+
+项目描述：
+项目介绍
+搭建以Linux为操作系统的服务器集群。通过LVS的DR模式，实现访问Apache网站时，支持多种分发策略的四层负载均衡。缓解单台Apache服务器的访问压力，提高访问上限。DR模式可缓解Director服务器的压力，提高工作效率。同时通过Piranha软件在两台Director服务器间建立心跳线，实现Director服务器的双机热备，避免单点故障造成的集群瘫痪。
+我的职责
+在RealSercer服务器上安装并搭建Apache网站环境，设置IP地址，修改内核参数。分别在主备Director服务器上安装ipvsadm和Piranha。设置LVS的DR模式，选择适合的分发策略（wlc），设置VIP和DIP地址，分别测试主备Director服务器均可单独工作实现负载均衡。配置Piranha的配置文件。部署浮动资源（VIP、IPVS策略）。测试主备服务器实现双机热备
+
+
+自我评价（案例一）
+1、熟悉redhat，centos，windows系统，对bash python脚本较为熟悉,具有同时管理超过四千台以上服务器的运维管理经验。
+2、具有自建小型机房的网络设计及运维经验，熟悉cisco router cisco swith cisco ASA Firewall Mcafee IPS，Array 四七层负载均衡网络设备，熟悉TCP/IP协议，擅于网络抓包分析。
+3、具有服务器虚拟化经验，对服务器主流的kvm vmware esx 较为熟悉。
+4、擅长服务器的安全加固，有成熟的DDOS解决方案，熟悉常见的DDOS攻击。
+5、擅长运维架构的制定web db 集群的实施,熟悉python php bind apache nginx haproxys lvs tomcat memcached zabbix rsync mfs redis scribed drbd openvpn mysql mongodb docker elk flume hadoop hive 及django web 开发、熟悉http协议。
+6、本人个性沉稳，做事注重条理性,重视工作方法，喜欢钻研，自信和执着是我的原则,沉着和乐观是我处事的态度，接受能力和执行能力强，诚实有责任心，如有幸被贵公司录用我将会竭尽全力为贵公司奉献微薄之力。
+
